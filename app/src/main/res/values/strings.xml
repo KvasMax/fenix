@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Fenix</string>
+    <string name="placeholder_url">https://jsonplaceholder.typicode.com/</string>
+</resources>
