@@ -9,9 +9,13 @@ interface IBasePresenter<Self : IBasePresenter<Self, V>, V : BaseView<V, Self>> 
 
     fun onInit(savedInstanceState: Bundle?, msg: Msg)
 
+    fun onAttachTo(view: V)
+
     fun onSaveState(savedInstanceState: Bundle)
 
-    fun onAttachTo(view: V)
+    fun onStart()
+
+    fun onStop()
 
     fun onDetach()
 }

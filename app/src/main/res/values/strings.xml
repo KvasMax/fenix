@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Fenix</string>
     <string name="placeholder_url">https://jsonplaceholder.typicode.com/</string>
+    <string name="unexpected_error">Unexpected error occurred</string>
 </resources>

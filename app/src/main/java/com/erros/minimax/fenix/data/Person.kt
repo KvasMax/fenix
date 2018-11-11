@@ -1,6 +1,5 @@
 package com.erros.minimax.fenix.data
 
-import android.annotation.SuppressLint
 import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
 import kotlinx.android.parcel.Parcelize
@@ -8,7 +7,6 @@ import kotlinx.android.parcel.Parcelize
 /**
  * Created by milkman on 07.02.18.
  */
-@SuppressLint("ParcelCreator")
 @Parcelize
 data class Person(
         @SerializedName("id") val id: Int, //1
@@ -21,7 +19,6 @@ data class Person(
         @SerializedName("company") val company: Company
 ) : Parcelable
 
-@SuppressLint("ParcelCreator")
 @Parcelize
 data class Company(
         @SerializedName("name") val name: String, //Romaguera-Crona
@@ -29,7 +26,6 @@ data class Company(
         @SerializedName("bs") val bs: String //harness real-time e-markets
 ) : Parcelable
 
-@SuppressLint("ParcelCreator")
 @Parcelize
 data class Address(
         @SerializedName("street") val street: String, //Kulas Light
@@ -39,14 +35,12 @@ data class Address(
         @SerializedName("geo") val geo: Geo
 ) : Parcelable
 
-@SuppressLint("ParcelCreator")
 @Parcelize
 data class Geo(
         @SerializedName("lat") val lat: String, //-37.3159
         @SerializedName("lng") val lng: String //81.1496
 ) : Parcelable
 
-@SuppressLint("ParcelCreator")
 @Parcelize
 data class Post(
         @SerializedName("id") val id: Int,

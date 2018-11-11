@@ -1,7 +1,6 @@
 package com.erros.minimax.fenix.view.detail
 
 import android.app.Activity
-import android.content.Intent
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -9,56 +8,53 @@ import android.view.View
 import android.view.ViewGroup
 import com.erros.minimax.fenix.R
 import com.erros.minimax.fenix.data.Post
-import com.erros.minimax.fenix.di.DetailActivityModule
 import com.erros.minimax.fenix.di.Scopes
 import com.erros.minimax.fenix.view.base.BaseActivity
 import com.erros.minimax.fenix.view.base.Init
 import com.erros.minimax.fenix.view.base.Msg
+import com.erros.minimax.fenix.view.base.Refresh
+import com.erros.minimax.fenix.view.utils.bundleOf
+import com.erros.minimax.fenix.view.utils.launchActivity
+import com.erros.minimax.fenix.view.utils.showErrorMessage
 import kotlinx.android.synthetic.main.activity_detail.*
 import kotlinx.android.synthetic.main.item_post.view.*
-import toothpick.Toothpick
-import javax.inject.Inject
+import org.koin.android.ext.android.getKoin
+import org.koin.android.ext.android.inject
+import org.koin.android.scope.ext.android.bindScope
 
 class DetailActivity : BaseActivity<DetailView, DetailPresenter>(), DetailView {
 
     companion object {
         private const val ARG_USER_ID = "ARG_USER_ID"
         fun start(activity: Activity, userId: Int) {
-            val intent = Intent(activity, DetailActivity::class.java)
-            intent.putExtra(ARG_USER_ID, userId)
-            activity.startActivity(intent)
+            activity.launchActivity<DetailActivity>(bundleOf(ARG_USER_ID to userId))
         }
     }
 
-    @Inject
-    lateinit var presenter: DetailPresenter
+    init {
+        bindScope(getKoin().getOrCreateScope(Scopes.DETAIL_SCOPE))
+    }
+
+    override val presenter: DetailPresenter by inject()
 
     override val layoutId: Int
         get() = R.layout.activity_detail
 
-    override val firstMsg: Msg
+    override val initialMsg: Msg
         get() = intent.extras?.let {
             DetailPresenter.UserIdMsg(it.getInt(ARG_USER_ID))
         } ?: Init
 
     private val adapter = PostsAdapter()
 
-    init {
-        Toothpick.openScopes(Scopes.APP, Scopes.DETAIL_SCREEN).apply {
-            installModules(DetailActivityModule())
-            Toothpick.inject(this@DetailActivity, this)
-        }
-    }
-
-    override fun getBasePresenter(): DetailPresenter = presenter
-
     override fun onViewCreated() {
-        swipeRefresh.setOnRefreshListener { presenter.accept(DetailPresenter.Refresh()) }
+        title = "Posts"
+        swipeRefresh.setOnRefreshListener { presenter.accept(Refresh) }
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
     }
 
-    override fun changeProgressVisibility(visible: Boolean) {
+    override fun setProgressVisibility(visible: Boolean) {
         if (visible) {
             progressBar.visibility = View.VISIBLE
         } else {
@@ -66,18 +62,16 @@ class DetailActivity : BaseActivity<DetailView, DetailPresenter>(), DetailView {
         }
     }
 
-    override fun changeRefreshVisibility(visible: Boolean) {
+    override fun showError(msg: String) {
+        showErrorMessage(msg)
+    }
+
+    override fun setRefreshVisibility(visible: Boolean) {
         swipeRefresh.isRefreshing = visible
     }
 
     override fun showList(posts: List<Post>) {
         adapter.setCollection(posts)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        presenter.onDetach()
-        Toothpick.closeScope(Scopes.DETAIL_SCREEN)
     }
 
     inner class PostsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {

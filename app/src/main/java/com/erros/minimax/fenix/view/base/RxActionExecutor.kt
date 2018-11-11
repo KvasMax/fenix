@@ -6,38 +6,45 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 
 
-class RxActionScheduler<S : State>(
+class RxActionExecutor<S : State>(
         private val rxComponent: RxComponent<S>
-) : ActionScheduler<S>(rxComponent) {
+) : ActionExecutor<S>(rxComponent) {
 
     private val compositeDisposable = CompositeDisposable()
 
-    override fun processCommand(cmd: Cmd, callback: (Msg) -> Unit) {
+    override fun processCommand(command: Command, callback: (Msg) -> Unit) {
         compositeDisposable.add(
-                rxComponent.call(cmd)
+                rxComponent.call(command)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe({
                             callback.invoke(it)
                         }, {
-                            callback.invoke(ErrorMsg(it, cmd))
+                            callback.invoke(CommandErrorMsg(it, command))
                         })
         )
     }
 
-    fun dispose() {
+    override fun clearQueue() {
+        super.clearQueue()
         if (!compositeDisposable.isDisposed) {
             compositeDisposable.dispose()
         }
     }
 
-    interface RxComponent<S> : ActionScheduler.Component<S> {
+    interface RxComponent<S> : ActionExecutor.Component<S> {
 
-        fun call(cmd: Cmd): Single<Msg>
+        fun call(command: Command): Single<Msg>
 
         @Deprecated("Not used")
-        override fun call(cmd: Cmd, callback: (Msg) -> Unit) {
+        override fun call(command: Command, callback: (Msg) -> Unit) {
 
         }
     }
+}
+
+inline fun doOnUIThread(crossinline operations: () -> Unit): Single<Msg> {
+    return Single.fromCallable {
+        operations()
+    }.subscribeOn(AndroidSchedulers.mainThread()).map { Idle }
 }

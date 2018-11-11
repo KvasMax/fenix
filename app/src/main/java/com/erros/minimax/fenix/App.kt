@@ -1,12 +1,8 @@
 package com.erros.minimax.fenix
 
 import android.app.Application
-import com.erros.minimax.fenix.di.AppModule
-import com.erros.minimax.fenix.di.Scopes
-import toothpick.Toothpick
-import toothpick.configuration.Configuration
-import toothpick.registries.FactoryRegistryLocator
-import toothpick.registries.MemberInjectorRegistryLocator
+import com.erros.minimax.fenix.di.DIManager
+import com.erros.minimax.fenix.view.utils.logDebug
 
 /**
  * Created by minimax on 5/1/18.
@@ -16,8 +12,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         logDebug("onCreate")
-        initToothpick()
-        openAppScope()
+        DIManager.initModules(this)
     }
 
     override fun onLowMemory() {
@@ -27,7 +22,7 @@ class App : Application() {
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        logDebug("onTrimMemory")
+        logDebug("onTrimMemory: $level")
     }
 
     override fun onTerminate() {
@@ -35,18 +30,4 @@ class App : Application() {
         logDebug("onTerminate")
     }
 
-    private fun initToothpick() {
-        val configuration = if (BuildConfig.DEBUG) Configuration.forDevelopment() else Configuration.forProduction()
-
-        Toothpick.setConfiguration(configuration.disableReflection()
-                .preventMultipleRootScopes())
-
-        FactoryRegistryLocator.setRootRegistry(com.erros.minimax.fenix.FactoryRegistry())
-        MemberInjectorRegistryLocator.setRootRegistry(com.erros.minimax.fenix.MemberInjectorRegistry())
-    }
-
-    private fun openAppScope() {
-        val appScope = Toothpick.openScope(Scopes.APP)
-        appScope.installModules(AppModule(this))
-    }
 }

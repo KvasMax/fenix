@@ -7,6 +7,6 @@ interface BaseView<Self : BaseView<Self, P>, P : IBasePresenter<P, Self>> {
 
     val layoutId: Int
 
-    fun getBasePresenter(): P
+    val presenter: P
 
 }
