@@ -13,8 +13,9 @@ import com.erros.minimax.fenix.view.utils.toParcelable
 import java.util.concurrent.Executors
 
 interface StateStorage {
-    fun <S> setStateForId(id: Int, state: S) where S : State
-    fun <S, C> getStateForId(id: Int, parcelableCreator: C, callback: (S?) -> Unit) where S : State, C : Parcelable.Creator<S>
+    fun <S> putStateForId(id: Int, state: S) where S : State
+    fun <S, C> takeStateForId(id: Int, parcelableCreator: C, callback: (S?) -> Unit) where S : State, C : Parcelable.Creator<S>
+    fun clear()
 }
 
 class SQLiteStateStorage(
@@ -32,7 +33,7 @@ class SQLiteStateStorage(
     private val executor = Executors.newSingleThreadExecutor()
     private val handler = Handler(Looper.getMainLooper())
 
-    override fun <S : State> setStateForId(id: Int, state: S) {
+    override fun <S : State> putStateForId(id: Int, state: S) {
         executor.execute {
             val byteArray = state.toByteArray()
             val byteArraySize = byteArray.size
@@ -59,9 +60,9 @@ class SQLiteStateStorage(
         }
     }
 
-    override fun <S : State, C : Parcelable.Creator<S>> getStateForId(id: Int, parcelableCreator: C, callback: (S?) -> Unit) {
+    override fun <S : State, C : Parcelable.Creator<S>> takeStateForId(id: Int, parcelableCreator: C, callback: (S?) -> Unit) {
         executor.execute {
-            val db = sqLiteOpenHelper.readableDatabase
+            val db = sqLiteOpenHelper.writableDatabase
             val cursor =
                     db.rawQuery("select $FIELD_STATE_VALUE from $TABLE_STATES where $FIELD_STATE_ID = $id order by $FIELD_ID", null)
             if (cursor.moveToFirst()
@@ -74,6 +75,7 @@ class SQLiteStateStorage(
                 } while (cursor.moveToNext())
                 cursor.close()
                 val state = byteLists.toByteArray().toParcelable(parcelableCreator)
+                db.execSQL("delete from $TABLE_STATES where $FIELD_STATE_ID = $id")
                 handler.post {
                     callback(state)
                 }
@@ -85,6 +87,13 @@ class SQLiteStateStorage(
             }
         }
 
+    }
+
+    override fun clear() {
+        executor.execute {
+            val db = sqLiteOpenHelper.writableDatabase
+            db.execSQL("delete from $TABLE_STATES")
+        }
     }
 
     private class StatesSQLiteOpenHelper(

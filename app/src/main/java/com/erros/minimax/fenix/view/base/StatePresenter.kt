@@ -33,12 +33,17 @@ abstract class StatePresenter<Self : StatePresenter<Self, V, S>, V : BaseView<V,
     }
 
     fun onInit(savedInstanceState: Bundle?, msg: Msg) {
-        val stateId = savedInstanceState?.getInt(stateIdBundleKey)
+        if (savedInstanceState == null) {
+            stateStorage.clear()
+        }
+        val stateId = if (savedInstanceState?.containsKey(stateIdBundleKey) == true)
+            savedInstanceState.getInt(stateIdBundleKey)
+        else null
         if (stateId == null) {
             actionExecutor.state = initialState
             actionExecutor.accept(msg)
         } else {
-            stateStorage.getStateForId(stateId, parcelableCreator) { state ->
+            stateStorage.takeStateForId(stateId, parcelableCreator) { state ->
                 if (state == null) {
                     actionExecutor.state = initialState
                     actionExecutor.accept(msg)
@@ -53,7 +58,7 @@ abstract class StatePresenter<Self : StatePresenter<Self, V, S>, V : BaseView<V,
     fun onSaveState(savedInstanceState: Bundle) {
         val stateId = Random.nextInt()
         savedInstanceState.putInt(stateIdBundleKey, stateId)
-        actionExecutor.state?.let { stateStorage.setStateForId(stateId, it) }
+        actionExecutor.state?.let { stateStorage.putStateForId(stateId, it) }
     }
 
     override fun onAttachTo(view: V) {
