@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import com.erros.minimax.fenix.R
 import com.erros.minimax.fenix.data.Post
-import com.erros.minimax.fenix.di.Scopes
 import com.erros.minimax.fenix.view.base.BaseActivity
 import com.erros.minimax.fenix.view.base.Init
 import com.erros.minimax.fenix.view.base.Msg
@@ -18,9 +17,7 @@ import com.erros.minimax.fenix.view.utils.launchActivity
 import com.erros.minimax.fenix.view.utils.showErrorMessage
 import kotlinx.android.synthetic.main.activity_detail.*
 import kotlinx.android.synthetic.main.item_post.view.*
-import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.android.inject
-import org.koin.android.scope.ext.android.bindScope
 
 class DetailActivity : BaseActivity<DetailView, DetailPresenter>(), DetailView {
 
@@ -29,10 +26,6 @@ class DetailActivity : BaseActivity<DetailView, DetailPresenter>(), DetailView {
         fun start(activity: Activity, userId: Int) {
             activity.launchActivity<DetailActivity>(bundleOf(ARG_USER_ID to userId))
         }
-    }
-
-    init {
-        bindScope(getKoin().getOrCreateScope(Scopes.DETAIL_SCOPE))
     }
 
     override val presenter: DetailPresenter by inject()

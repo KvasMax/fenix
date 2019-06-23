@@ -7,7 +7,7 @@ import com.erros.minimax.fenix.view.utils.logDebug
 /**
  * Created by minimax on 5/1/18.
  */
-abstract class BaseActivity<Self : BaseView<Self, P>, P : BasePresenter<P, Self, *>> : AppCompatActivity(), BaseView<Self, P> {
+abstract class BaseActivity<Self : BaseView<Self, P>, P : StatePresenter<P, Self, *>> : AppCompatActivity(), BaseView<Self, P> {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,8 +23,8 @@ abstract class BaseActivity<Self : BaseView<Self, P>, P : BasePresenter<P, Self,
     abstract val initialMsg: Msg
 
     override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
         presenter.onSaveState(outState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onStart() {

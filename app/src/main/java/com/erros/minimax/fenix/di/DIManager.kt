@@ -3,32 +3,29 @@ package com.erros.minimax.fenix.di
 import android.app.Application
 import com.erros.minimax.fenix.BuildConfig
 import com.erros.minimax.fenix.R
-import com.erros.minimax.fenix.data.PlaceholderApi
-import com.erros.minimax.fenix.data.PlaceholderRepository
-import com.erros.minimax.fenix.data.ResourceProvider
+import com.erros.minimax.fenix.data.*
 import com.erros.minimax.fenix.view.detail.DetailPresenter
 import com.erros.minimax.fenix.view.main.MainPresenter
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import org.koin.android.ext.android.startKoin
 import org.koin.android.ext.koin.androidContext
-import org.koin.dsl.module.module
+import org.koin.core.context.startKoin
+import org.koin.core.qualifier.named
+import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
-
-object Scopes {
-    const val MAIN_SCOPE = "MAIN_SCOPE"
-    const val DETAIL_SCOPE = "DETAIL_SCOPE"
-}
 
 object DIManager {
 
     public const val baseUrlName = "baseUrlName"
 
     fun initModules(application: Application) {
-        application.startKoin(application, listOf(appModule))
+        startKoin {
+            androidContext(application)
+            modules(listOf(appModule))
+        }
     }
 
     private val appModule = module {
@@ -44,7 +41,7 @@ object DIManager {
             httpClientBuilder.build()
         }
 
-        single(baseUrlName) {
+        single(named(baseUrlName)) {
             androidContext().getString(R.string.placeholder_url)
         }
 
@@ -53,7 +50,7 @@ object DIManager {
                     .addConverterFactory(GsonConverterFactory.create())
                     .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .client(get())
-                    .baseUrl(get<String>(name = baseUrlName))
+                    .baseUrl(get<String>(named(baseUrlName)))
                     .build()
                     .create(PlaceholderApi::class.java)
         }
@@ -66,9 +63,17 @@ object DIManager {
             PlaceholderRepository(get())
         }
 
-        scope(Scopes.MAIN_SCOPE) { MainPresenter(get(), get()) }
+        single {
+            SQLiteStateStorage(androidContext()) as StateStorage
+        }
 
-        scope(Scopes.DETAIL_SCOPE) { DetailPresenter(get(), get()) }
+        factory {
+            MainPresenter(get(), get(), get())
+        }
+
+        factory {
+            DetailPresenter(get(), get(), get())
+        }
 
     }
 }

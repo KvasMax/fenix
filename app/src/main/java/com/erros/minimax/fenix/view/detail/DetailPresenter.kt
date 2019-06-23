@@ -1,31 +1,23 @@
 package com.erros.minimax.fenix.view.detail
 
+import android.os.Parcel
+import android.os.Parcelable
 import com.erros.minimax.fenix.R
 import com.erros.minimax.fenix.data.PlaceholderRepository
 import com.erros.minimax.fenix.data.Post
 import com.erros.minimax.fenix.data.ResourceProvider
+import com.erros.minimax.fenix.data.StateStorage
 import com.erros.minimax.fenix.view.base.*
 import io.reactivex.Single
-import kotlinx.android.parcel.Parcelize
 
 class DetailPresenter constructor(
         private val placeholderRepository: PlaceholderRepository,
-        private val resourceProvider: ResourceProvider
-) : BasePresenter<DetailPresenter, DetailView, DetailPresenter.DetailState>(),
+        private val resourceProvider: ResourceProvider,
+        stateStorage: StateStorage
+) : StatePresenter<DetailPresenter, DetailView, DetailPresenter.DetailState>(stateStorage),
         RxActionExecutor.RxComponent<DetailPresenter.DetailState> {
 
-    // place a state and fields at the top
-
-    @Parcelize
-    data class DetailState(
-            val userId: Int? = null,
-            val posts: List<Post>? = null,
-            val isLoading: Boolean = false,
-            val isRefreshing: Boolean = false
-    ) : State()
-
     override val initialState: DetailState = DetailPresenter.DetailState()
-
     override val actionExecutor: ActionExecutor<DetailState> = RxActionExecutor(this)
 
     override fun call(command: Command): Single<Msg> {
@@ -39,7 +31,8 @@ class DetailPresenter constructor(
     override fun update(msg: Msg, state: DetailPresenter.DetailState): Pair<DetailPresenter.DetailState, Command> {
         return when (msg) {
             is UserIdMsg -> state.copy(isLoading = true, userId = msg.userId) to GetPostsCommand(userId = msg.userId)
-            is Refresh -> state.copy(isRefreshing = true) to (state.userId?.let { GetPostsCommand(it) } ?: None)
+            is Refresh -> state.copy(isRefreshing = true) to (state.userId?.let { GetPostsCommand(it) }
+                    ?: None)
             is PostsMsg -> state.copy(posts = msg.posts, isLoading = false, isRefreshing = false) to None
             // ignoring error type for now
             is ErrorMsg -> state.copy(isLoading = false, isRefreshing = false) to ShowErrorMessageCommand(resourceProvider.getString(R.string.unexpected_error))
@@ -57,7 +50,41 @@ class DetailPresenter constructor(
         }
     }
 
-    //place commands and messages at the bottom
+    //place a state, commands and messages at the bottom
+
+    override val parcelableCreator: Parcelable.Creator<DetailState> = DetailState.CREATOR
+
+    data class DetailState(
+            val userId: Int? = null,
+            val posts: List<Post>? = null,
+            val isLoading: Boolean = false,
+            val isRefreshing: Boolean = false
+    ) : State(), Parcelable {
+        constructor(source: Parcel) : this(
+                source.readValue(Int::class.java.classLoader) as Int?,
+                source.createTypedArrayList(Post.CREATOR),
+                1 == source.readInt(),
+                1 == source.readInt()
+        )
+
+        override fun describeContents() = 0
+
+        override fun writeToParcel(dest: Parcel, flags: Int) = with(dest) {
+            writeValue(userId)
+            writeTypedList(posts)
+            writeInt((if (isLoading) 1 else 0))
+            writeInt((if (isRefreshing) 1 else 0))
+        }
+
+        companion object {
+            @JvmField
+            val CREATOR: Parcelable.Creator<DetailState> = object : Parcelable.Creator<DetailState> {
+                override fun createFromParcel(source: Parcel): DetailState = DetailState(source)
+                override fun newArray(size: Int): Array<DetailState?> = arrayOfNulls(size)
+            }
+        }
+
+    }
 
     //Commands
     data class GetPostsCommand(

@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import com.erros.minimax.fenix.R
 import com.erros.minimax.fenix.data.Person
-import com.erros.minimax.fenix.di.Scopes
 import com.erros.minimax.fenix.view.base.BaseActivity
 import com.erros.minimax.fenix.view.base.Init
 import com.erros.minimax.fenix.view.base.Msg
@@ -17,15 +16,9 @@ import com.erros.minimax.fenix.view.detail.DetailActivity
 import com.erros.minimax.fenix.view.utils.showErrorMessage
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.item_person.view.*
-import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.android.inject
-import org.koin.android.scope.ext.android.bindScope
 
 class MainActivity : BaseActivity<MainView, MainPresenter>(), MainView {
-
-    init {
-        bindScope(getKoin().getOrCreateScope(Scopes.MAIN_SCOPE))
-    }
 
     override val presenter: MainPresenter by inject()
 

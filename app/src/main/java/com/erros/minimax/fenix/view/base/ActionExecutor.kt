@@ -3,7 +3,6 @@ package com.erros.minimax.fenix.view.base
 import android.os.Parcelable
 import java.util.*
 
-
 sealed class AbstractState
 abstract class State : AbstractState(), Parcelable
 
@@ -43,7 +42,8 @@ open class ActionExecutor<S : State>(
                         try {
                             processCommand(command) { msg ->
                                 when (msg) {
-                                    is Idle -> { }
+                                    is Idle -> {
+                                    }
                                     else -> msgQueue.addLast(msg)
                                 }
                                 loop()

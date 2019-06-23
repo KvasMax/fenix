@@ -1,31 +1,24 @@
 package com.erros.minimax.fenix.view.main
 
+import android.os.Parcel
+import android.os.Parcelable
 import com.erros.minimax.fenix.R
 import com.erros.minimax.fenix.data.Person
 import com.erros.minimax.fenix.data.PlaceholderRepository
 import com.erros.minimax.fenix.data.ResourceProvider
+import com.erros.minimax.fenix.data.StateStorage
 import com.erros.minimax.fenix.view.base.*
 import io.reactivex.Single
-import kotlinx.android.parcel.Parcelize
 
 /**
  * Created by minimax on 5/1/18.
  */
 class MainPresenter constructor(
         private val placeholderRepository: PlaceholderRepository,
-        private val resourceProvider: ResourceProvider
-) : BasePresenter<MainPresenter, MainView, MainPresenter.MainState>(),
+        private val resourceProvider: ResourceProvider,
+        stateStorage: StateStorage
+) : StatePresenter<MainPresenter, MainView, MainPresenter.MainState>(stateStorage),
         RxActionExecutor.RxComponent<MainPresenter.MainState> {
-
-    // place a state and fields at the top
-
-    @Parcelize
-    data class MainState(
-            val persons: List<Person>? = null,
-            val isLoading: Boolean = false,
-            val isRefreshing: Boolean = false,
-            val chosenPerson: Person? = null
-    ) : State()
 
     override val initialState: MainState = MainState()
 
@@ -65,7 +58,41 @@ class MainPresenter constructor(
         }
     }
 
-    //place commands and messages at the bottom
+    //place a state, commands and messages at the bottom
+
+    override val parcelableCreator: Parcelable.Creator<MainState> = MainState.CREATOR
+
+    data class MainState(
+            val persons: List<Person>? = null,
+            val isLoading: Boolean = false,
+            val isRefreshing: Boolean = false,
+            val chosenPerson: Person? = null
+    ) : State(), Parcelable {
+        constructor(source: Parcel) : this(
+                source.createTypedArrayList(Person.CREATOR),
+                1 == source.readInt(),
+                1 == source.readInt(),
+                source.readParcelable<Person>(Person::class.java.classLoader)
+        )
+
+        override fun describeContents() = 0
+
+        override fun writeToParcel(dest: Parcel, flags: Int) = with(dest) {
+            writeTypedList(persons)
+            writeInt((if (isLoading) 1 else 0))
+            writeInt((if (isRefreshing) 1 else 0))
+            writeParcelable(chosenPerson, 0)
+        }
+
+        companion object {
+            @JvmField
+            val CREATOR: Parcelable.Creator<MainState> = object : Parcelable.Creator<MainState> {
+                override fun createFromParcel(source: Parcel): MainState = MainState(source)
+                override fun newArray(size: Int): Array<MainState?> = arrayOfNulls(size)
+            }
+        }
+
+    }
 
     //Commands
     class GetPersonsCommand : Command()
